@@ -2,6 +2,7 @@ package ru.mirea.atmosfera.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "appointment")
@@ -37,6 +38,9 @@ public class Appointment {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = false, updatable = false)
+    private UUID cancelToken = UUID.randomUUID();
+
     protected Appointment() {
     }
 
@@ -52,6 +56,10 @@ public class Appointment {
 
     public Long getId() {
         return id;
+    }
+
+    public UUID getCancelToken() {
+        return cancelToken;
     }
 
     public Client getClient() {

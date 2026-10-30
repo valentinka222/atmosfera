@@ -7,6 +7,8 @@ import ru.mirea.atmosfera.entity.Appointment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     @Query("""
@@ -20,4 +22,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findBookedInPeriod(@Param("masterId") Long masterId,
                                          @Param("from") LocalDateTime from,
                                          @Param("to") LocalDateTime to);
+
+    Optional<Appointment> findByCancelToken(UUID cancelToken);
 }

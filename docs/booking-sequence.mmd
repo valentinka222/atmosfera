@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor Клиент
+    participant API as AppointmentController
+    participant BS as BookingService
+    participant SS as SlotService
+    participant DB as PostgreSQL
+    participant Mail as MailPit (SMTP)
+
+    Клиент->>API: POST /api/appointments
+    API->>API: Валидация данных (@Valid)
+    API->>BS: create(request)
+    BS->>DB: Найти мастера и услугу
+    BS->>SS: getFreeSlots(мастер, услуга, дата)
+    SS->>DB: График и занятые записи
+    SS-->>BS: Свободные слоты
+    alt Время недоступно
+        BS-->>API: ConflictException
+        API-->>Клиент: 409 Conflict
+    else Время свободно
+        BS->>DB: Сохранить запись (saveAndFlush)
+        alt Время заняли параллельно
+            DB-->>BS: Нарушение appointment_no_overlap
+            BS-->>API: ConflictException
+            API-->>Клиент: 409 Conflict
+        else Успех
+            BS->>Mail: Письмо-подтверждение
+            BS-->>API: AppointmentDto
+            API-->>Клиент: 201 Created + токен отмены
+        end
+    end
