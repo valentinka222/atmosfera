@@ -11,6 +11,7 @@ spring:
     open-in-view: false
   flyway:
     enabled: true
+    locations: "${FLYWAY_LOCATIONS:classpath:db/migration,classpath:db/testdata}"
 
 server:
   port: 8080
