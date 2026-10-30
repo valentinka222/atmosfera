@@ -1,0 +1,48 @@
+erDiagram
+  MASTER ||--o{ MASTER_SERVICE : "умеет"
+  SERVICE ||--o{ MASTER_SERVICE : "выполняется"
+  MASTER ||--o{ WORK_SCHEDULE : "работает по"
+  MASTER ||--o{ APPOINTMENT : "принимает"
+  SERVICE ||--o{ APPOINTMENT : "в записи"
+  CLIENT ||--o{ APPOINTMENT : "делает"
+  MASTER {
+    bigint id PK
+    varchar full_name
+    varchar specialization
+    varchar phone
+    boolean active
+  }
+  SERVICE {
+    bigint id PK
+    varchar name
+    varchar category
+    int duration_min
+    numeric price
+  }
+  MASTER_SERVICE {
+    bigint master_id PK,FK
+    bigint service_id PK,FK
+  }
+  WORK_SCHEDULE {
+    bigint id PK
+    bigint master_id FK
+    int day_of_week
+    time start_time
+    time end_time
+  }
+  CLIENT {
+    bigint id PK
+    varchar full_name
+    varchar phone
+    varchar email
+  }
+  APPOINTMENT {
+    bigint id PK
+    bigint client_id FK
+    bigint master_id FK
+    bigint service_id FK
+    timestamp start_at
+    timestamp end_at
+    varchar status
+    timestamp created_at
+  }
