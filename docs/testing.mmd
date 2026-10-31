@@ -1,0 +1,21 @@
+flowchart LR
+    dev([Разработчик]) -->|"env.sh test tests"| script[scripts/env.sh]
+    script -->|"1. down + up --wait"| env
+    script -->|"2. run test-runner"| runner
+
+    subgraph env["Окружение test"]
+        proxy["proxy"]
+        backend["backend"]
+        db[("db<br/>tmpfs")]
+        mailpit["mailpit"]
+        proxy --> backend --> db
+        backend -->|SMTP| mailpit
+    end
+
+    runner["test-runner<br/>JUnit 5 · REST Assured · Playwright"]
+    runner -->|"API-тесты: HTTP /api/..."| proxy
+    runner -->|"E2E: Chromium открывает сайт"| proxy
+    runner -->|"проверка писем: API MailPit"| mailpit
+    runner -->|"результаты"| vol[("том allure-results")]
+    vol --> allure["allure<br/>генерация отчёта"]
+    allure -->|":8083"| tester([Тестировщик])

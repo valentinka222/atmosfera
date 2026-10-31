@@ -10,3 +10,41 @@ services:
     volumes: !reset []
     tmpfs:
       - /var/lib/postgresql/data
+
+  # ---------- Автотесты ----------
+  # Профиль tests: при обычном "up" не запускается,
+  # только явной командой "run test-runner"
+  test-runner:
+    build: ./tests
+    image: atmosfera-tests:latest
+    profiles: ["tests"]
+    environment:
+      BASE_URL: http://proxy
+      MAILPIT_URL: http://mailpit:8025
+      TZ: Europe/Moscow
+    volumes:
+      - allure-results:/results
+    networks:
+      - frontend-net     # чтобы видеть proxy
+      - backend-net      # чтобы видеть API MailPit
+    depends_on:
+      proxy:
+        condition: service_started
+
+  # ---------- Отчёт Allure ----------
+  # Следит за папкой с результатами и сам собирает из них HTML-отчёт
+  allure:
+    image: frankescobar/allure-docker-service:latest
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: NONE
+      KEEP_HISTORY: 1
+    ports:
+      - "${ALLURE_PORT:-8083}:5050"
+    volumes:
+      - allure-results:/app/allure-results
+      - allure-reports:/app/default-reports
+    restart: unless-stopped
+
+volumes:
+  allure-results:
+  allure-reports:

@@ -24,11 +24,13 @@
 | MailPit | http://localhost:8025 | http://localhost:8026 |
 | Adminer | http://localhost:8081 | http://localhost:8082 |
 | База данных | том, открыта на порту 5433 | tmpfs, одноразовая, закрыта |
+| Отчёт Allure | — | http://localhost:8083/allure-docker-service/latest-report |
 
 ## Управление
 
 ```bash
 bash scripts/env.sh <dev|test> <up|down|reset|status|logs>
+bash scripts/env.sh test tests   # сбросить test и прогнать автотесты
 ```
 
 Примеры:

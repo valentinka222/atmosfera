@@ -10,6 +10,7 @@
 #              reset   — удалить среду вместе с данными и поднять заново
 #              status  — состояние контейнеров
 #              logs    — логи бэкенда (или указанного сервиса)
+#              tests   — сбросить test и прогнать автотесты (только для test)
 # =========================================================
 
 # Остановиться при первой же ошибке
@@ -55,6 +56,9 @@ print_urls() {
     if [ "$ENV_NAME" = "dev" ]; then
         echo "  База для IntelliJ: localhost:${DB_PUBLIC_PORT}"
     fi
+    if [ "$ENV_NAME" = "test" ]; then
+        echo "  Отчёт Allure: http://localhost:${ALLURE_PORT}/allure-docker-service/latest-report"
+    fi
 }
 
 case "$ACTION" in
@@ -77,6 +81,37 @@ case "$ACTION" in
         ;;
     logs)
         "${COMPOSE[@]}" logs -f "${3:-backend}"
+        ;;
+    tests)
+        if [ "$ENV_NAME" != "test" ]; then
+            echo "Автотесты запускаются только в окружении test"
+            exit 1
+        fi
+        # База test в tmpfs, поэтому down + up уже дают чистые данные.
+        # Без -v: тома с историей отчётов Allure сохраняются
+        echo "Перезапуск тестовой среды: база вернётся к эталонному состоянию…"
+        "${COMPOSE[@]}" down
+        "${COMPOSE[@]}" up -d --build --wait
+
+        echo
+        echo "Прогон автотестов…"
+        set +e
+        "${COMPOSE[@]}" run --rm --build test-runner
+        RESULT=$?
+        set -e
+
+        echo
+        echo "Формирование отчёта Allure…"
+        curl -s "http://localhost:${ALLURE_PORT}/allure-docker-service/generate-report" > /dev/null
+
+        print_urls
+        echo
+        if [ "$RESULT" -eq 0 ]; then
+            echo "Все тесты прошли успешно"
+        else
+            echo "Прогон завершился с ошибкой: упавшие тесты или сбой сборки — см. вывод выше и отчёт Allure"
+        fi
+        exit $RESULT
         ;;
     *)
         usage
