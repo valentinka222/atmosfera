@@ -1,0 +1,126 @@
+# =========================================================
+# CI/CD салона «Атмосфера»
+#
+#  test    — на каждый push и pull request: сборка, окружение test,
+#            автотесты, отчёт Allure в артефактах
+#  publish — только для ветки main и только если тесты прошли:
+#            публикация образов в GitHub Container Registry
+# =========================================================
+
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:          # ручной запуск кнопкой на GitHub
+
+# Если запушили ещё раз, пока идёт прошлый запуск, — прошлый отменить
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------- Сборка и автотесты ----------
+  test:
+    name: Сборка и автотесты в окружении test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Версии инструментов
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Поднять окружение test и прогнать автотесты
+        # Тот же скрипт, что и на компьютере разработчика.
+        # tee — показывать вывод и одновременно сохранять его в файл
+        run: bash scripts/env.sh test tests 2>&1 | tee test-output.log
+
+      - name: Извлечь результаты тестов из тома Docker
+        if: always()
+        run: |
+          mkdir -p allure-results
+          docker run --rm \
+            -v atmosfera-test_allure-results:/results \
+            -v "$PWD/allure-results:/out" \
+            alpine sh -c "cp -r /results/. /out/ 2>/dev/null || true"
+          echo "Файлов результатов: $(ls allure-results | wc -l)"
+
+      - name: Сформировать отчёт Allure
+        if: always()
+        # --single-file — отчёт одним HTML-файлом, открывается без веб-сервера
+        run: npx --yes allure-commandline generate allure-results --clean --single-file -o allure-report
+
+      - name: Итоги в сводку запуска
+        if: always()
+        run: |
+          {
+            echo "## Результаты автотестов"
+            echo
+            grep "Tests run:" test-output.log | tail -1 || echo "Тесты не запускались"
+            echo
+            echo "Подробный отчёт — в артефакте **allure-report** (внизу страницы запуска)."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Сохранить отчёт Allure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report
+          path: allure-report
+          retention-days: 14
+
+      - name: Логи сервисов при ошибке
+        if: failure()
+        run: |
+          docker compose -p atmosfera-test --env-file env/test.env \
+            -f docker-compose.yml -f docker-compose.test.yml \
+            logs --tail 100 backend proxy
+
+  # ---------- Публикация образов ----------
+  publish:
+    name: Публикация образов в GitHub Container Registry
+    needs: test                 # только после успешных тестов
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write           # право публиковать образы
+
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v4
+
+      - name: Вход в ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Сборка и отправка образов
+        run: |
+          # Имя владельца в адресе образа должно быть в нижнем регистре
+          OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          # Версия образа — первые 7 символов хеша коммита
+          TAG="${GITHUB_SHA::7}"
+
+          echo "## Опубликованные образы" >> "$GITHUB_STEP_SUMMARY"
+          for name in backend frontend proxy; do
+            IMAGE="ghcr.io/$OWNER/atmosfera-$name"
+            docker build \
+              --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}" \
+              -t "$IMAGE:$TAG" -t "$IMAGE:latest" "./$name"
+            docker push "$IMAGE:$TAG"
+            docker push "$IMAGE:latest"
+            echo "- \`$IMAGE:$TAG\`" >> "$GITHUB_STEP_SUMMARY"
+          done
