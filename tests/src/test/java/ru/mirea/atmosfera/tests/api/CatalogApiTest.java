@@ -24,7 +24,7 @@ class CatalogApiTest extends ApiTestBase {
                 .when().get("/api/services")
                 .then()
                 .statusCode(200)
-                .body("size()", equalTo(10))
+                .body("size()", equalTo(11))
                 .extract().jsonPath().getList("category");
 
         assertThat(new HashSet<>(categories))
