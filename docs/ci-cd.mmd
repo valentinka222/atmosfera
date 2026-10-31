@@ -1,0 +1,22 @@
+flowchart LR
+    dev([Разработчик]) -->|"git push / pull request"| gh[(GitHub<br/>репозиторий)]
+    gh -->|"триггер"| test
+
+    subgraph test["Job test — ubuntu-latest"]
+        direction TB
+        t1["Получить код"] --> t2["env.sh test tests<br/>сборка образов,<br/>окружение test,<br/>17 автотестов"]
+        t2 --> t3["Результаты<br/>из тома Docker"]
+        t3 --> t4["Отчёт Allure<br/>(один HTML-файл)"]
+    end
+
+    t4 --> art[("Артефакт<br/>allure-report")]
+    t2 -->|"тесты упали"| fail(["Проверка не пройдена<br/>публикации нет"])
+    t2 -->|"тесты прошли,<br/>ветка main"| publish
+
+    subgraph publish["Job publish — ubuntu-latest"]
+        direction TB
+        p1["Вход в ghcr.io<br/>(GITHUB_TOKEN)"] --> p2["docker build<br/>backend · frontend · proxy"]
+        p2 --> p3["docker push<br/>теги: хеш коммита, latest"]
+    end
+
+    p3 --> ghcr[("GitHub Container<br/>Registry")]
