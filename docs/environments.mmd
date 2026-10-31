@@ -1,0 +1,37 @@
+flowchart TB
+    dev([Разработчик])
+    admin([Администратор])
+    gh[(GitHub<br/>репозиторий)]
+
+    subgraph tools["Инструменты управления"]
+        envsh["scripts/env.sh<br/>up · down · reset · status · logs · tests"]
+        swarmsh["scripts/swarm.sh<br/>init · push · deploy · status · rm"]
+        portainer["Portainer :9443<br/>веб-панель"]
+        ci["GitHub Actions<br/>CI/CD"]
+    end
+
+    subgraph envs["Окружения"]
+        devenv["dev — Docker Compose<br/>:80 · БД в томе, открыта для IDE"]
+        testenv["test — Docker Compose<br/>:8090 · БД в tmpfs · автотесты · Allure :8083"]
+        stage["stage — Docker Swarm<br/>:8100 · реплики · обновление и откат"]
+    end
+
+    registry[("Локальный registry<br/>:5000")]
+    ghcr[("GitHub Container<br/>Registry")]
+
+    dev --> envsh
+    dev -->|git push| gh
+    gh --> ci
+    ci -->|"env.sh test tests"| cienv["test на runner GitHub"]
+    ci -->|"образы"| ghcr
+
+    envsh --> devenv
+    envsh --> testenv
+    swarmsh --> registry
+    swarmsh --> stage
+    registry -.-> stage
+
+    admin --> portainer
+    portainer --> devenv
+    portainer --> testenv
+    portainer --> stage

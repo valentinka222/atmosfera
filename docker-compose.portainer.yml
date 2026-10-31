@@ -1,0 +1,24 @@
+# ===== Portainer — веб-панель администрирования Docker =====
+# Запуск:   docker compose -f docker-compose.portainer.yml up -d
+# Адрес:    https://localhost:9443
+#
+# Portainer управляет Docker через сокет и получает полный доступ к нему.
+# Использовать только локально, только администратору, только с паролем
+
+name: atmosfera-admin
+
+services:
+  portainer:
+    image: portainer/portainer-ce:lts
+    ports:
+      - "9443:9443"            # веб-интерфейс по HTTPS
+    volumes:
+      # Доступ к Docker: через этот сокет Portainer видит и управляет
+      # контейнерами, сервисами кластера, томами, сетями и образами
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Настройки и учётные записи Portainer — в отдельном томе
+      - portainer-data:/data
+    restart: unless-stopped
+
+volumes:
+  portainer-data:
