@@ -72,7 +72,7 @@ public class BookingService {
         boolean available = freeSlots.stream()
                 .anyMatch(slot -> slot.start().equals(startTime));
         if (!available) {
-            throw new ConflictException("Время " + startTime + " недоступно для записи");
+            throw new ConflictException("Время " + startTime + " недоступно для записи. Выберите другое время");
         }
 
         // Клиент: если уже записывался с этим email — используем его, иначе создаём
@@ -92,7 +92,7 @@ public class BookingService {
             appointmentRepository.saveAndFlush(appointment);
         } catch (DataIntegrityViolationException e) {
             // Кто-то занял это время между нашей проверкой и сохранением
-            throw new ConflictException("Это время только что заняли. Выберите другое");
+            throw new ConflictException("Это время только что заняли. Выберите другое время");
         }
 
         notificationService.sendBookingConfirmation(appointment);

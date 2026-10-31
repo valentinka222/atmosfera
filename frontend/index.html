@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Атмосфера — онлайн-запись в салон красоты</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Unbounded:wght@300;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__inner">
+        <h1 class="hero__title">Атмосфера</h1>
+        <p class="hero__lead">
+          Запишитесь к мастеру онлайн: выберите услугу, удобный день и время.
+        </p>
+      </div>
+    </header>
+
+    <main class="booking">
+      <section class="step" id="step-service">
+        <h2 class="step__title"><span class="step__num">1</span>Услуга</h2>
+        <div id="services" data-testid="services">Загружаем услуги…</div>
+      </section>
+
+      <section class="step" id="step-master" hidden>
+        <h2 class="step__title"><span class="step__num">2</span>Мастер</h2>
+        <div id="masters" class="options" data-testid="masters"></div>
+      </section>
+
+      <section class="step" id="step-time" hidden>
+        <h2 class="step__title">
+          <span class="step__num">3</span>День и время
+        </h2>
+        <div id="days" class="options days" data-testid="days"></div>
+        <div id="slots" class="options" data-testid="slots"></div>
+      </section>
+
+      <section class="step" id="step-contacts" hidden>
+        <h2 class="step__title">
+          <span class="step__num">4</span>Ваши контакты
+        </h2>
+        <form id="contact-form" class="form" novalidate>
+          <p class="summary" id="summary" data-testid="summary"></p>
+          <label class="field">
+            <span>Имя</span>
+            <input
+              name="clientName"
+              autocomplete="name"
+              data-testid="input-name"
+            />
+          </label>
+          <label class="field">
+            <span>Телефон</span>
+            <input
+              name="clientPhone"
+              type="tel"
+              autocomplete="tel"
+              placeholder="+7 900 000-00-00"
+              data-testid="input-phone"
+            />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input
+              name="clientEmail"
+              type="email"
+              autocomplete="email"
+              data-testid="input-email"
+            />
+          </label>
+          <p
+            class="error"
+            id="form-error"
+            role="alert"
+            data-testid="form-error"
+            hidden
+          ></p>
+          <button
+            type="submit"
+            class="button"
+            id="submit-btn"
+            data-testid="submit"
+          >
+            Записаться
+          </button>
+        </form>
+      </section>
+
+      <section class="step" id="step-done" data-testid="done" hidden>
+        <h2 class="step__title">Вы записаны</h2>
+        <dl class="details" id="done-details"></dl>
+        <p>
+          Подтверждение отправлено на почту. Если планы изменятся,
+          <a id="cancel-link" data-testid="cancel-link">отмените запись</a>
+          не позднее чем за 2 часа до визита.
+        </p>
+        <button type="button" class="button button--ghost" id="restart-btn">
+          Записаться ещё раз
+        </button>
+      </section>
+    </main>
+
+    <footer class="footer">Салон красоты «Атмосфера»</footer>
+
+    <script type="module" src="js/booking.js"></script>
+  </body>
+</html>

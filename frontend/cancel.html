@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Отмена записи — Атмосфера</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Unbounded:wght@300;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="index.html">Атмосфера</a>
+    </header>
+
+    <main class="page">
+      <h1 class="page__title">Отмена записи</h1>
+      <p class="hint" id="status">Загружаем запись…</p>
+      <dl class="details" id="details" data-testid="details" hidden></dl>
+      <p class="error" id="error" role="alert" data-testid="error" hidden></p>
+      <p
+        class="notice"
+        id="notice"
+        role="status"
+        data-testid="notice"
+        hidden
+      ></p>
+      <div class="actions">
+        <button
+          type="button"
+          class="button"
+          id="cancel-btn"
+          data-testid="cancel-button"
+          hidden
+        >
+          Отменить запись
+        </button>
+        <a
+          class="button button--ghost"
+          id="new-booking"
+          href="index.html"
+          hidden
+          >Записаться снова</a
+        >
+      </div>
+    </main>
+
+    <script type="module" src="js/cancel.js"></script>
+  </body>
+</html>
