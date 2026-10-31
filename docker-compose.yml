@@ -1,0 +1,105 @@
+# Имя проекта: от него образуются имена контейнеров, сетей и томов
+name: atmosfera
+
+services:
+
+  # ---------- База данных ----------
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # ---------- Фейковая почта ----------
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+    networks:
+      - backend-net
+    restart: unless-stopped
+
+  # ---------- Бэкенд ----------
+  backend:
+    build: ./backend
+    image: atmosfera-backend:latest
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      APP_BASE_URL: ${APP_BASE_URL}
+      FLYWAY_LOCATIONS: ${FLYWAY_LOCATIONS}
+      TZ: Europe/Moscow
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    networks:
+      - frontend-net
+      - backend-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+  # ---------- Фронтенд ----------
+  frontend:
+    build: ./frontend
+    image: atmosfera-frontend:latest
+    networks:
+      - frontend-net
+    restart: unless-stopped
+
+  # ---------- Прокси: единственный вход снаружи ----------
+  proxy:
+    build: ./proxy
+    image: atmosfera-proxy:latest
+    ports:
+      - "${APP_PORT}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - frontend-net
+    restart: unless-stopped
+
+  # ---------- Просмотр базы через браузер ----------
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    networks:
+      - backend-net
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  frontend-net:
+  backend-net:

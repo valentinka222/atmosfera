@@ -1,0 +1,31 @@
+flowchart LR
+    user([Пользователь<br/>браузер])
+    tester([Тестировщик])
+
+    subgraph host["Docker Engine"]
+        subgraph fnet["frontend-net"]
+            proxy["proxy<br/>nginx :80"]
+            frontend["frontend<br/>nginx + HTML/CSS/JS"]
+        end
+
+        backend["backend<br/>Spring Boot :8080"]
+
+        subgraph bnet["backend-net"]
+            db[("db<br/>PostgreSQL 16")]
+            mailpit["mailpit<br/>SMTP :1025 / UI :8025"]
+            adminer["adminer<br/>:8080"]
+        end
+
+        vol[("том db-data")]
+    end
+
+    user -->|":80"| proxy
+    proxy -->|"/"| frontend
+    proxy -->|"/api/"| backend
+    backend -->|"JDBC :5432"| db
+    backend -->|"SMTP :1025"| mailpit
+    adminer --> db
+    db --- vol
+
+    tester -->|":8025"| mailpit
+    tester -->|":8081"| adminer
