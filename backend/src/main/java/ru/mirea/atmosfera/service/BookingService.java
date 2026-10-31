@@ -1,6 +1,7 @@
 package ru.mirea.atmosfera.service;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.mirea.atmosfera.dto.AppointmentDto;
@@ -54,7 +55,7 @@ public class BookingService {
 
     @Transactional
     public AppointmentDto create(CreateAppointmentRequest request) {
-        Master master = masterRepository.findById(request.masterId())
+        Master master = masterRepository.findByIdForUpdate(request.masterId())
                 .filter(Master::isActive)
                 .orElseThrow(() -> new NotFoundException("Мастер с id=" + request.masterId() + " не найден"));
 
@@ -90,7 +91,7 @@ public class BookingService {
             // saveAndFlush — сохранить и сразу отправить в базу, чтобы
             // ограничение appointment_no_overlap сработало прямо здесь
             appointmentRepository.saveAndFlush(appointment);
-        } catch (DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException | PessimisticLockingFailureException e) {
             // Кто-то занял это время между нашей проверкой и сохранением
             throw new ConflictException("Это время только что заняли. Выберите другое время");
         }

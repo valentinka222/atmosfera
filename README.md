@@ -41,6 +41,22 @@ bash scripts/env.sh test reset   # сбросить к эталонному со
 bash scripts/env.sh dev down     # остановить среду разработки
 ```
 
+## Кластер (stage)
+
+Окружение stage разворачивается в Docker Swarm из образов локального registry.
+
+```bash
+bash scripts/swarm.sh init          # включить Swarm и поднять registry (localhost:5000)
+bash scripts/swarm.sh push 1.0      # собрать образы и отправить в registry
+bash scripts/swarm.sh deploy 1.0    # развернуть стек atmosfera-stage
+bash scripts/swarm.sh status        # сервисы и реплики
+bash scripts/swarm.sh rm            # удалить стек
+```
+
+Сайт: http://localhost:8100, MailPit: http://localhost:8027.
+Бэкенд и фронтенд работают в двух репликах; обновление — плавающее,
+с автоматическим откатом при неудачной проверке здоровья.
+
 ## Требования
 
 Docker Desktop (Docker Engine, Docker Compose v2), Git Bash (на Windows).
