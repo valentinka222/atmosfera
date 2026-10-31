@@ -21,6 +21,12 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Все шаги run — в bash с pipefail: конвейер «команда | tee» считается
+# упавшим, если упала любая его часть, а не только последняя команда
+defaults:
+  run:
+    shell: bash
+    
 jobs:
 
   # ---------- Сборка и автотесты ----------
